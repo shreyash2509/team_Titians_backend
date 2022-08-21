@@ -20,6 +20,9 @@
 .navbar-brand{
     color: white;
 }
+.navbar-brand:hover, .navbar-brand:focus{
+    color: white;
+  }
 .nav-link{
     color: white !important;
 }
@@ -34,9 +37,151 @@
     border-radius: 40px;
     width: 100px;
 }
+.join-btn:hover, .join-btn:focus, .join-btn:active{
+    background-color: inherit;
+    border-color: inherit;
+    box-shadow: none;
+  }
 /* .navbar-content{
     margin: 0 2rem;
 } */
+
+/* login modal */
+.login-modal{
+    max-width: 750px;
+  }
+  
+  .login-modal-header .btn-close{
+    margin: -0.5rem 0.5rem -0.5rem auto;
+  }
+  
+  .login-modal-content{
+    background: white;
+    border-radius: 10px;
+  }
+  
+  .login-modal-header{
+    border: none;
+    padding: 0;
+    background: #d1e7dd;
+    align-items: center;
+    border-radius: 10px;
+  }
+  
+  .alert{
+    font-size: 14px;
+    margin: 0;
+    border: none;
+    border-radius: 10px;
+  }
+  
+  .login-modal-body{
+    padding: 2rem 2rem 0 2rem;
+  }
+  
+  .login-signup{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: black;
+  }
+  
+  .login-title{
+    font-size: 24px;
+    font-weight: 700;
+  }
+  
+  .signup-msg{
+    font-size: 14px;
+  }
+  
+  .form-img{
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .login-form{
+    padding: 2rem 0 1rem 0;
+  }
+  
+  .login-form form{
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .input-login{
+    width: 320px;
+    height: 45px;
+    margin: 0.1rem 0;
+    padding: 0 1rem;
+    background: #F7F8FA;
+    border: 1px solid #D9D9DB;
+    border-radius: 10px 2px 10px 0px;
+  }
+  
+  .login-modal-img{
+    padding: 0 1rem;
+  }
+  
+  .login-modal-buttons{
+    max-width: 280px;
+    margin: auto;
+  }
+  
+  .login-btn{
+    margin: 2rem 0 1rem 0;
+    background: #0083FF;
+    color: white;
+    width: 280px;
+    height: 40px;
+    border: none;
+    border-radius: 20px;
+    text-align: center;
+  }
+  
+  .fb-btn{
+    margin: 1rem 0;
+    width: 280px;
+    height: 40px;
+    background: #FFFFFF;
+    border: 0.6px solid #D9D9DB;
+    border-radius: 2px;
+  }
+  
+  .google-btn{
+    margin: 0 0 1rem 0;
+    width: 280px;
+    height: 40px;
+    background: #FFFFFF;
+    border: 0.6px solid #D9D9DB;
+    border-radius: 2px;
+  }
+  
+  .google-btn img{
+    width: 25px;
+  }
+  
+  .fgt-pw{
+    text-align: center;
+    text-decoration: underline;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 7px;
+    color: black;
+  }
+  
+  .first-last-name{
+    display: flex;
+  }
+  
+  .tnc-txt{
+    font-size: 12px;
+    text-align: center;
+    font-weight: 700;
+    padding: 1rem 0;
+    color: black;
+  }
+
 .main-container{
     background-color: #192428;
     /* height: 100vh; */
@@ -140,3 +285,42 @@
   justify-content: space-between;
 
 }
+
+@media screen and (max-width: 678px) {
+    .login-signup{
+      display: block;
+      text-align: center;
+    }
+    .login-title{
+      font-size: 32px;
+    }
+    .signup-msg{
+      font-size: 20px;
+    }
+    .form-img{
+      display: block;
+    }
+    .login-form form{
+      align-items: center;
+      font-size: 20px;
+    }
+    .login-form form input{
+      width: 90%;
+    }
+    .login-modal-img img{
+      display: none;
+    }
+    .login-modal{
+      margin: 0rem;
+      align-items: flex-end;
+    }
+    .connect-content{
+      display: block;
+      text-align: center;
+    }
+    .connect-icons{
+      display: block;
+      max-width: none;
+      margin: initial;
+    }
+  }

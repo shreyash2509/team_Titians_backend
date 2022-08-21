@@ -86,6 +86,9 @@ app.get("/Backtest1",function(req,res){
 app.get("/FAQ",function(req,res){
   res.render("faq");
 });
+app.get("/profile",function(req,res){
+  res.render("profile");
+});
 
 // no data found on assets amd timing
 
