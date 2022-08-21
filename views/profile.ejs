@@ -1,0 +1,164 @@
+
+<%- include('header'); -%>
+
+<%- include('nav'); -%>
+<div class="profile">
+
+    <div class="profile-header">
+        <div class="profile-pic">
+            <img src="image/profile-pic.png" alt="">
+        </div>
+        <div class="personal-info" style="text-align: left;">
+            <p>Name : Alex Pandey</p>
+            <p>Email : alexpandey42@gmail.com</p>
+            <p>Mobile : +91-8399106337</p>
+        </div>
+    </div>
+
+    <!-- <div class="edit-pro">
+        <button type="button" data-bs-toggle="modal" data-bs-target="#EditModal">
+            <img src="/asstes/images/edit.svg" alt="">&nbsp;&nbsp; Edit Profile
+        </button>
+    </div> -->
+
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="EditModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered edit-modal-dialog">
+            <div class="modal-content edit-modal-content">
+                <div class="modal-header edit-modal-header">
+                    <h5 class="modal-title edit-modal-title" id="exampleModalLabel">Edit Profile</h5>
+                    <button type="button" class="btn-close edit-modal-close-btn" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body edit-modal-body">
+                    <form action="" class="edit-profile-form" enctype="multipart/form-data" method="POST">
+                        {% csrf_token %}
+                        <label class="form-field form-field-ep">Add / Modify Profile Picture : </label>
+                        &nbsp;&nbsp;&nbsp;
+                        <input type="file" class="form-field form-field-ep" style="padding-bottom: 1rem;"
+                            name="profile_img"><br>
+                        <label for="name" class="form-field form-field-ep">Enter Your Name : </label><br>
+                        <input type="text" class="form-input form-input-ep" name="name" id="full-name"><br>
+                        <label for="ph-number" class="form-field form-field-ep">Phone Number : </label><br>
+                        <input type="text" class="form-input form-input-ep" name="ph-number"
+                            id="phone-number"><br>
+                        <div class="modal-footer edit-modal-footer" style="display: block;">
+                            <button type="submit" class="btn btn-primary submit-btn">Save changes</button>
+                        </div>
+                        <div class="mytoast" style="display: none;">
+                            <p class="myspanConationer  alert alert-primary text-center"></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <center>
+        <hr class="partition-line" size="6px">
+    </center>
+
+    <div class="purchased-section">
+        <p class="plans-head">Purchased Plans</p>
+        <div class="plans-bought">
+            <div class="counseling-plan">
+                <p>Backtest Portfolio</p>
+                <p>₹11,999.00/-</p>
+            </div>   
+            <div class="counseling-plan">
+                <p>Factor Analysis</p>
+                <p>₹7,999.00/-</p>
+            </div>   
+            <div class="counseling-plan">
+                <p>Portfolio Optimization</p>
+                <p>₹24,999.00/-</p>
+            </div>    
+        </div>
+    </div>
+
+    <center>
+        <hr class="partition-line" size="6px">
+    </center>
+
+
+    <div class="purchased-section">
+        <p class="plans-head">My Portfolio</p>
+        <div class="plans-bought">
+            <!-- <div class="counseling-plan">
+                <p>Sector</p>
+                <p>Amount Invested</p>
+                <p>Current Value</p>
+                <p>Profit / Loss (%)</p>
+            </div>   
+            <div class="counseling-plan">
+                <p>Large Cap Funds</p>
+                <p>₹45732.00/-</p>
+                <p>₹49671.76/-</p>
+                <p style="color: green;">23.56%</p>
+            </div>   
+            <div class="counseling-plan">
+                <p>Small Cap Funds</p>
+                <p>₹21873.00/-</p>
+                <p>₹18725.61/-</p>
+                <p style="color: red;">12.7%</p>
+            </div>    
+            <div class="counseling-plan">
+                <p>Mid - Cap Funds</p>
+                <p>₹78341.00/-</p>
+                <p>₹67488.94/-</p>
+                <p style="color: red;">19.19%</p>
+            </div>  -->
+
+            <table class="table_port table_desc">
+                <tr class="table_port">
+                    <th class="table_port_content table_head">Sector</th>
+                    <th class="table_port_content table_head">Amount Invested</th>
+                    <th class="table_port_content table_head">Current Value</th>
+                    <th class="table_port_content table_head">Profit/Loss (%)</th>
+                </tr>
+                <tr class="table_port">
+                    <td class="table_port_content">Large Cap Funds</td>
+                    <td class="table_port_content">₹45732.00/-</td>
+                    <td class="table_port_content">₹49671.76/-</td>
+                    <td class="table_port_content" style="color: green;">23.56%</td>
+                </tr>
+                <tr class="table_port">
+                    <td class="table_port_content">Small Cap Funds</td>
+                    <td class="table_port_content">₹21873.00/-</td>
+                    <td class="table_port_content">₹18725.61/-</td>
+                    <td class="table_port_content" style="color: red;">12.7%</td>
+                </tr>
+                <tr class="table_port">
+                    <td class="table_port_content">Mid - Cap Funds</td>
+                    <td class="table_port_content">₹78341.00/-</td>
+                    <td class="table_port_content">₹67488.94/-</td>
+                    <td class="table_port_content" style="color: red;">19.19%</td>
+                </tr>
+            </table>
+
+        </div>
+    </div>
+</div>
+</div>
+
+
+<%- include('footer'); -%>
+
+
+          <!-- highcharts -->
+          <!-- <script src="https://code.highcharts.com/highcharts.js"></script>
+          <script src="https://code.highcharts.com/modules/data.js"></script>
+          <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+          <script src="https://code.highcharts.com/highcharts.js"></script> -->
+          
+          <!-- aos -->
+          <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+        <script>
+            AOS.init();
+        </script>
+        <!-- scripts -->
+        <!-- <script src="./asstes/js/script.js"></script>        
+        <script src="./asstes/js/chart.js"></script> -->
+        
+    </body>
+</html>
