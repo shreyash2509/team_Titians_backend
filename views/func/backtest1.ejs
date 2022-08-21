@@ -1,0 +1,1627 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZetCount</title>
+    <!-- CSS only -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
+    <!-- JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
+    
+    
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link
+    rel="stylesheet"
+    href="//use.fontawesome.com/releases/v5.0.7/css/all.css"
+    />
+
+    <link rel="stylesheet" href="css/merged-4b5ddc42c451e5d0b325c5d10e865f35.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/footer2.css">
+    <link rel="stylesheet" href="css/card.css">
+    
+<script>
+    var autoCompleteTickers=true;
+    var showFullName=false;
+    var enableExport=false;
+    var expiredAccount=false;
+    var enablePDF=false;
+    var bookmarkURL="backtest-asset-class-allocation3c6c.html?s=y";
+    var showBookmarkLink=true;
+    var showExportLinks=true;
+    window.q=[];window.$=function(f){q.push(f)}
+    </script>
+    
+    
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','../www.google-analytics.com/analytics.js','ga');
+        ga('create', 'UA-43200681-1', 'portfoliovisualizer.com');
+        ga('send', 'pageview');
+    </script>
+    
+    
+    
+    
+        <script>
+            $(function() {
+                toggleTimeframe();
+                toggleAdjustment();
+                toggleBands();
+                toggleLeverage();
+                togglePortfolioNames();
+    
+                $('#rebalanceType').on('change', function (e) {
+                    toggleBands();
+                });
+                var benchmarkField=$('#benchmark');
+                benchmarkField.on('change', function (e) {
+                    $("#benchmarkSymbol").closest('.form-group').toggle($('#benchmark').val()==-1);
+                });
+                $("#benchmarkSymbol").closest('.form-group').toggle(benchmarkField.val()==-1);
+    
+                $("#mode").on('change', function (e) {
+                    var field=$('#submitType');
+                    if(field.val()!='Refresh') {
+                        field.val('Refresh');
+                        field.prop('form').submit();
+                    }
+                });
+                $("#annualOperation").on('change', function (e) {
+                    toggleAdjustment();
+                });
+                $('#leverageType').on('change', function (e) {
+                    toggleLeverage();
+                });
+                $("select[id^='portfolio']").on('change', function (e) {
+                    selectPortfolio(this);
+                }).each(function() {
+                    selectPortfolio(this);
+                });
+                for(var portfolioIndex=1;portfolioIndex<=3;portfolioIndex++) {
+                    (function(index) {
+                        $("input[id$='"+index+"']").on('change', function (e) {
+                            processTotal(index);
+                        });
+                    })(portfolioIndex);
+                }
+                $("[id^='reset']").on('click', function (e) {
+                    var portfolioIndex=this.id.substring('reset'.length);
+                    if(portfolioIndex=='All') { 
+                        clearPortfolios(getParentPortfolio(this));
+                    }
+                    else { 
+                        var selector="input.asset-weight[id$='"+portfolioIndex+"']";
+                        $(selector).val('').removeAttr('readonly');
+                        $('#portfolio'+portfolioIndex).val('Custom').trigger("chosen:updated");
+                        processTotal(portfolioIndex);
+                    }
+                });
+                $("div[id^='portfolio']").find('.chosen-drop').css({"width": "300px", "min-width": "100%", "white-space": "nowrap"});
+                
+            });
+    
+            function toggleBands() {
+                var bands=$("#rebalanceType").val()==5;
+                $("#absoluteDeviation").closest('.form-group').toggle(bands);
+                $("#relativeDeviation").closest('.form-group').toggle(bands);
+            }
+    
+            function toggleLeverage() {
+                var leverageType=$("#leverageType").val();
+                var fixedRatio=leverageType==1;
+                var fixedDebt=leverageType==2;
+                $("#leverageRatio").closest('.form-group').toggle(fixedRatio);
+                $("#debtAmount").closest('.form-group').toggle(fixedDebt);
+                $("#debtInterest").closest('.form-group').toggle(fixedRatio || fixedDebt);
+                $("#maintenanceMargin").closest('.form-group').toggle(fixedDebt);
+                $("#leveragedBenchmark").closest('.form-group').toggle(fixedRatio || fixedDebt);
+            }
+    
+            function togglePortfolioNames() {
+                var names=$("#portfolioNames").val()=='true';
+                $("input[id^='portfolioName']").closest('.form-group').toggle(names);
+            }
+    
+            function toggleTimeframe() {
+                var showMonths=$("#timePeriod").val()==2;
+                $("#firstMonth").closest('.form-group').toggle(showMonths);
+                $("#lastMonth").closest('.form-group').toggle(showMonths);
+                $("#calendarAligned").closest('.form-group').toggle(showMonths);
+                toggleYTD();
+            }
+    
+            function toggleYTD() {
+                var showYTD=$("#timePeriod").val()==4 && $("#endYear").val()>=2022;
+                $("#includeYTD").closest('.form-group').toggle(showYTD);
+            }
+    
+            function toggleAdjustment() {
+                var adjustmentType=$("#annualOperation").val();
+                var adjustmentFieldGroup=$("#annualAdjustment").closest('.form-group');
+                var showAmount=(adjustmentType==1 || adjustmentType==2);
+                var showPercentage=(adjustmentType==3);
+                var sameFees=$("#sameFees").val()=='true';
+                if(showAmount) {
+                    adjustmentFieldGroup.find('.control-label').text(adjustmentType==1 ? "Contribution Amount" : "Withdrawal Amount");
+                }
+                adjustmentFieldGroup.toggle(showAmount);
+                $("#inflationAdjusted").closest('.form-group').toggle(showAmount);
+                $("#annualPercentage").closest('.form-group').toggle(showPercentage);
+                var frequencyFieldGroup=$("#frequency").closest('.form-group');
+                frequencyFieldGroup.find('.control-label').text(adjustmentType==1 ? "Contribution Frequency" : "Withdrawal Frequency");
+                frequencyFieldGroup.toggle(adjustmentType>0);
+                $("#fees").closest('.form-group').toggle(sameFees);
+                $("#fee1").closest('.form-group').toggle(!sameFees);
+                $("#fee2").closest('.form-group').toggle(!sameFees);
+                $("#fee3").closest('.form-group').toggle(!sameFees);
+            }
+        </script>
+</head>
+    <body style="overflow-x: hidden;">
+
+        <div class="main-container">
+
+
+            <%- include('../nav'); -%>
+
+
+            
+
+<div class="container-fluid">
+    <h1>Backtest Portfolio Asset Class Allocation</h1>
+    <p>
+        <p>This portfolio backtesting tool allows you to construct one or more portfolios based on the selected asset class level allocations in order to analyze and backtest portfolio returns, risk characteristics, drawdowns, and rolling returns. You can compare up to three different portfolios against the selected benchmark, and you can also specify any periodic contribution or withdrawal cashflows and the preferred portfolio rebalancing strategy. </p><p>You can also use the <a href="backtest-portfolio.html">portfolio backtesting tool</a> to build and compare portfolios based on specific mutual funds, ETFs, and stocks.</p>
+    </p>
+
+    
+
+    <form id="AssetAllocationTestForm" name="AssetAllocationTestForm" action="https://www.portfoliovisualizer.com/backtest-asset-class-allocation#analysisResults" method="post" class="form-horizontal"  novalidate>
+
+        <input type="hidden" id="submitType" name="submitType" value="">
+        
+        <div class="form-group">
+<label for="mode" class="control-label col-sm-3">Portfolio View <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Choose between table or list view of asset classes"></span>
+</label>
+<div class="col-sm-3">
+<select id="mode" name="mode" class="form-control" >
+<option value="1" selected>List View</option>
+<option value="2">Table View</option>
+</select>
+</div>
+</div>
+
+        
+        <div class="form-group">
+<label for="timePeriod" class="control-label col-sm-3">Time Period <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Specify time period in years or in months"></span>
+</label>
+<div class="col-sm-3">
+<select id="timePeriod" name="timePeriod" class="form-control" onchange="toggleTimeframe()" >
+<option value="2">Month-to-Month</option>
+<option value="4" selected>Year-to-Year</option>
+</select>
+</div>
+</div>
+
+        <div class="form-group">
+<label for="startYear" class="control-label col-sm-3">Start Year <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Start year for portfolio backtest"></span>
+</label>
+<div class="col-sm-2">
+<select id="startYear" name="startYear" class="form-control" >
+<option value="1972" selected>1972</option>
+<option value="1973">1973</option>
+<option value="1974">1974</option>
+<option value="1975">1975</option>
+<option value="1976">1976</option>
+<option value="1977">1977</option>
+<option value="1978">1978</option>
+<option value="1979">1979</option>
+<option value="1980">1980</option>
+<option value="1981">1981</option>
+<option value="1982">1982</option>
+<option value="1983">1983</option>
+<option value="1984">1984</option>
+<option value="1985">1985</option>
+<option value="1986">1986</option>
+<option value="1987">1987</option>
+<option value="1988">1988</option>
+<option value="1989">1989</option>
+<option value="1990">1990</option>
+<option value="1991">1991</option>
+<option value="1992">1992</option>
+<option value="1993">1993</option>
+<option value="1994">1994</option>
+<option value="1995">1995</option>
+<option value="1996">1996</option>
+<option value="1997">1997</option>
+<option value="1998">1998</option>
+<option value="1999">1999</option>
+<option value="2000">2000</option>
+<option value="2001">2001</option>
+<option value="2002">2002</option>
+<option value="2003">2003</option>
+<option value="2004">2004</option>
+<option value="2005">2005</option>
+<option value="2006">2006</option>
+<option value="2007">2007</option>
+<option value="2008">2008</option>
+<option value="2009">2009</option>
+<option value="2010">2010</option>
+<option value="2011">2011</option>
+<option value="2012">2012</option>
+<option value="2013">2013</option>
+<option value="2014">2014</option>
+<option value="2015">2015</option>
+<option value="2016">2016</option>
+<option value="2017">2017</option>
+<option value="2018">2018</option>
+<option value="2019">2019</option>
+<option value="2020">2020</option>
+<option value="2021">2021</option>
+<option value="2022">2022</option>
+</select>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="firstMonth" class="control-label col-sm-3">First Month <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Start month for portfolio backtest"></span>
+</label>
+<div class="col-sm-2">
+<select id="firstMonth" name="firstMonth" class="form-control" >
+<option value="1" selected>Jan</option>
+<option value="2">Feb</option>
+<option value="3">Mar</option>
+<option value="4">Apr</option>
+<option value="5">May</option>
+<option value="6">Jun</option>
+<option value="7">Jul</option>
+<option value="8">Aug</option>
+<option value="9">Sep</option>
+<option value="10">Oct</option>
+<option value="11">Nov</option>
+<option value="12">Dec</option>
+</select>
+</div>
+</div>
+
+        <div class="form-group">
+<label for="endYear" class="control-label col-sm-3">End Year <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="End year for portfolio backtest"></span>
+</label>
+<div class="col-sm-2">
+<select id="endYear" name="endYear" class="form-control" onchange="toggleYTD()" >
+<option value="1972">1972</option>
+<option value="1973">1973</option>
+<option value="1974">1974</option>
+<option value="1975">1975</option>
+<option value="1976">1976</option>
+<option value="1977">1977</option>
+<option value="1978">1978</option>
+<option value="1979">1979</option>
+<option value="1980">1980</option>
+<option value="1981">1981</option>
+<option value="1982">1982</option>
+<option value="1983">1983</option>
+<option value="1984">1984</option>
+<option value="1985">1985</option>
+<option value="1986">1986</option>
+<option value="1987">1987</option>
+<option value="1988">1988</option>
+<option value="1989">1989</option>
+<option value="1990">1990</option>
+<option value="1991">1991</option>
+<option value="1992">1992</option>
+<option value="1993">1993</option>
+<option value="1994">1994</option>
+<option value="1995">1995</option>
+<option value="1996">1996</option>
+<option value="1997">1997</option>
+<option value="1998">1998</option>
+<option value="1999">1999</option>
+<option value="2000">2000</option>
+<option value="2001">2001</option>
+<option value="2002">2002</option>
+<option value="2003">2003</option>
+<option value="2004">2004</option>
+<option value="2005">2005</option>
+<option value="2006">2006</option>
+<option value="2007">2007</option>
+<option value="2008">2008</option>
+<option value="2009">2009</option>
+<option value="2010">2010</option>
+<option value="2011">2011</option>
+<option value="2012">2012</option>
+<option value="2013">2013</option>
+<option value="2014">2014</option>
+<option value="2015">2015</option>
+<option value="2016">2016</option>
+<option value="2017">2017</option>
+<option value="2018">2018</option>
+<option value="2019">2019</option>
+<option value="2020">2020</option>
+<option value="2021">2021</option>
+<option value="2022" selected>2022</option>
+</select>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="lastMonth" class="control-label col-sm-3">Last Month <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="End month for portfolio backtest"></span>
+</label>
+<div class="col-sm-2">
+<select id="lastMonth" name="lastMonth" class="form-control" >
+<option value="1">Jan</option>
+<option value="2">Feb</option>
+<option value="3">Mar</option>
+<option value="4">Apr</option>
+<option value="5">May</option>
+<option value="6">Jun</option>
+<option value="7">Jul</option>
+<option value="8">Aug</option>
+<option value="9">Sep</option>
+<option value="10">Oct</option>
+<option value="11">Nov</option>
+<option value="12" selected>Dec</option>
+</select>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="calendarAligned" class="control-label col-sm-3">Calendar Aligned <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Align quarterly and annual cashflows and rebalancing with calendar periods or count from the portfolio start month"></span>
+</label>
+<div class="col-sm-2">
+<select id="calendarAligned" name="calendarAligned" class="form-control" >
+<option value="true" selected>Yes</option>
+<option value="false">No</option>
+</select>
+</div>
+</div>
+
+        
+        <div class="form-group">
+<label for="includeYTD" class="control-label col-sm-3">Include YTD <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Include the month-to-date period of the current month for YTD results"></span>
+</label>
+<div class="col-sm-2">
+<select id="includeYTD" name="includeYTD" class="form-control" >
+<option value="true">Yes</option>
+<option value="false" selected>No</option>
+</select>
+</div>
+</div>
+
+        
+        <div class="form-group">
+<label for="initialAmount" class="control-label col-sm-3">Initial Amount <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Initial portfolio balance"></span>
+</label>
+<div class="col-sm-3">
+<div class="input-group">
+<span class="input-group-addon">$</span>
+<input type="number" id="initialAmount" name="initialAmount" class="form-control fmt-posint" value="10000" placeholder="Amount..." >
+<span class="input-group-addon">.00</span>
+</div>
+</div>
+</div>
+
+        <div class="form-group">
+<label for="annualOperation" class="control-label col-sm-3">Cashflows <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Specify whether any withdrawals or contributions are done"></span>
+</label>
+<div class="col-sm-4">
+<select id="annualOperation" name="annualOperation" class="form-control" >
+<option value="0" selected>None</option>
+<option value="1">Contribute fixed amount</option>
+<option value="2">Withdraw fixed amount</option>
+<option value="3">Withdraw fixed percentage</option>
+</select>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="annualAdjustment" class="control-label col-sm-3">Contribution Amount <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Periodic withdrawal or contribution amount"></span>
+</label>
+<div class="col-sm-3">
+<div class="input-group">
+<span class="input-group-addon">$</span>
+<input type="number" id="annualAdjustment" name="annualAdjustment" class="form-control fmt-posint" value="0" placeholder="Amount..." >
+<span class="input-group-addon">.00</span>
+</div>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="inflationAdjusted" class="control-label col-sm-3">Inflation Adjusted <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Adjust contribution or withdrawal amount for inflation"></span>
+</label>
+<div class="col-sm-2">
+<select id="inflationAdjusted" name="inflationAdjusted" class="form-control" >
+<option value="true" selected>Yes</option>
+<option value="false">No</option>
+</select>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="annualPercentage" class="control-label col-sm-3">Withdrawal percentage <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Periodic withdrawal percentage"></span>
+</label>
+<div class="col-sm-2">
+<div class="input-group">
+<input type="number" id="annualPercentage" name="annualPercentage" class="form-control fmt-pct" value="0.0" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="frequency" class="control-label col-sm-3">Frequency <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Specify frequency of any withdrawals or contributions"></span>
+</label>
+<div class="col-sm-3">
+<select id="frequency" name="frequency" class="form-control" >
+<option value="2">Monthly</option>
+<option value="3">Quarterly</option>
+<option value="4" selected>Annually</option>
+</select>
+</div>
+</div>
+
+        <div class="form-group">
+<label for="rebalanceType" class="control-label col-sm-3">Rebalancing <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Specify if and how rebalancing is done"></span>
+</label>
+<div class="col-sm-3">
+<select id="rebalanceType" name="rebalanceType" class="form-control" >
+<option value="0">No rebalancing</option>
+<option value="1" selected>Rebalance annually</option>
+<option value="2">Rebalance semi-annually</option>
+<option value="3">Rebalance quarterly</option>
+<option value="4">Rebalance monthly</option>
+<option value="5">Rebalance bands</option>
+</select>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="absoluteDeviation" class="control-label col-sm-3">Absolute Deviation <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Absolute percentage rebalancing corridor"></span>
+</label>
+<div class="col-sm-2">
+<div class="input-group">
+<input type="number" id="absoluteDeviation" name="absoluteDeviation" class="form-control fmt-pct" value="5.0" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="relativeDeviation" class="control-label col-sm-3">Relative Deviation <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Relative percentage rebalancing corridor. Set to zero to disable relative allocation checks."></span>
+</label>
+<div class="col-sm-2">
+<div class="input-group">
+<input type="number" id="relativeDeviation" name="relativeDeviation" class="form-control fmt-pct" value="25.0" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+
+        <div class="form-group">
+<label for="leverageType" class="control-label col-sm-3">Leverage Type <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Specify type of leverage used if any"></span>
+</label>
+<div class="col-sm-4">
+<select id="leverageType" name="leverageType" class="form-control" >
+<option value="0" selected>None</option>
+<option value="2">Fixed Debt Amount</option>
+<option value="1">Fixed Leverage Ratio</option>
+</select>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="leverageRatio" class="control-label col-sm-3">Leverage Ratio <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Leverage ratio (debt/equity)"></span>
+</label>
+<div class="col-sm-2">
+<div class="input-group">
+<input type="number" id="leverageRatio" name="leverageRatio" class="form-control fmt-pct" value="0.0" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="debtAmount" class="control-label col-sm-3">Debt Amount <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Amount of debt used for leverage"></span>
+</label>
+<div class="col-sm-3">
+<div class="input-group">
+<span class="input-group-addon">$</span>
+<input type="number" id="debtAmount" name="debtAmount" class="form-control fmt-posint" value="0" placeholder="Amount..." >
+<span class="input-group-addon">.00</span>
+</div>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="debtInterest" class="control-label col-sm-3">Debt Interest <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Annual interest rate on borrowed funds"></span>
+</label>
+<div class="col-sm-2">
+<div class="input-group">
+<input type="number" id="debtInterest" name="debtInterest" class="form-control fmt-pct" value="0.0" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="maintenanceMargin" class="control-label col-sm-3">Maintenance Margin <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Maintenance margin requirement to prevent margin call"></span>
+</label>
+<div class="col-sm-2">
+<div class="input-group">
+<input type="number" id="maintenanceMargin" name="maintenanceMargin" class="form-control fmt-pct" value="25.0" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="leveragedBenchmark" class="control-label col-sm-3">Leveraged Benchmark <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Specify whether leverage is also applied to the selected benchmark"></span>
+</label>
+<div class="col-sm-2">
+<select id="leveragedBenchmark" name="leveragedBenchmark" class="form-control" >
+<option value="true">Yes</option>
+<option value="false" selected>No</option>
+</select>
+</div>
+</div>
+
+        <div class="form-group">
+<label for="benchmark" class="control-label col-sm-3">Benchmark <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Select benchmark index or an imported benchmark series"></span>
+</label>
+<div class="col-sm-4">
+<select id="benchmark" name="benchmark" class="form-control" >
+<option value="" selected>None</option>
+<option value="-1">Specify Ticker...</option>
+<option value="-2">Import Benchmark...</option>
+<optgroup label="Benchmark Portfolio">
+<option value="VFINX">Vanguard 500 Index Investor</option>
+<option value="VBINX">Vanguard Balanced Index Inv</option>
+</optgroup>
+</select>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="benchmarkSymbol" class="control-label col-sm-3">Benchmark Ticker <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Ticker symbol for the benchmark asset"></span>
+</label>
+<div class="col-sm-4">
+<div class="input-group">
+<input type="text" id="benchmarkSymbol" name="benchmarkSymbol" class="form-control fmt-ticker" placeholder="Ticker symbol" >
+<span class="input-group-addon glyphicon glyphicon-search" title="Find ticker symbol"></span>
+</div>
+</div>
+</div>
+
+        
+        <div class="form-group">
+<label for="portfolioNames" class="control-label col-sm-3">Portfolio Names <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Specify portfolio names"></span>
+</label>
+<div class="col-sm-2">
+<select id="portfolioNames" name="portfolioNames" class="form-control" onchange="togglePortfolioNames()" >
+<option value="false" selected>Default</option>
+<option value="true">Custom</option>
+</select>
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="portfolioName1" class="control-label col-sm-3">Portfolio Name #1 <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Name for portfolio #1"></span>
+</label>
+<div class="col-sm-4">
+<input type="text" id="portfolioName1" name="portfolioName1" class="form-control" value="Portfolio 1" >
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="portfolioName2" class="control-label col-sm-3">Portfolio Name #2 <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Name for portfolio #2"></span>
+</label>
+<div class="col-sm-4">
+<input type="text" id="portfolioName2" name="portfolioName2" class="form-control" value="Portfolio 2" >
+</div>
+</div>
+
+        <div class="form-group norender">
+<label for="portfolioName3" class="control-label col-sm-3">Portfolio Name #3 <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-original-title="Name for portfolio #3"></span>
+</label>
+<div class="col-sm-4">
+<input type="text" id="portfolioName3" name="portfolioName3" class="form-control" value="Portfolio 3" >
+</div>
+</div>
+
+
+        <div id="pfSection" class="portfolio-section pv-asset-classes pv-allow-expansion pv-multiple" data-count="3" data-maxrows="50" data-advanced="false" >
+<div class="row ">
+<div class="col-sm-2 separateTop text-nowrap"><b>Asset Allocation</b>&nbsp;<span class="glyphicon glyphicon-trash" id="resetAll" title="Clear assets and allocations"></span></div>
+<div class="col-sm-4 separateTop"><b>Asset Class</b></div>
+<div class="col-sm-2 separateTop text-nowrap"><b>Portfolio #1</b><div id="allocation-menu-1" class="btn-group left-margin btn-group-sm allocation-menu hidden-print" role="group"><button id="allocationOptionsButton1" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="glyphicon glyphicon-cog"></i> <span class="caret"></span></button><ul class="dropdown-menu scrollable-menu"><li class="dropdown-header">Allocation Weights</li><li><a href="#" onclick="equalWeightAllocations(1,'');return false;">Equal Weight</a></li><li><a href="#" onclick="normalizeAllocations(1,'');return false;">Normalize</a></li><li><a href="#" onclick="clearAllocations(1,'');return false;">Clear</a></li><li><a href="#" onclick="copyAllocations(2,1,'');return false;">Copy From #2</a></li><li><a href="#" onclick="copyAllocations(3,1,'');return false;">Copy From #3</a></li><li class="divider"></li><li class="dropdown-header">Lazy Portfolios</li><li><a href="#" onclick="populatePortfolio('Growth Portfolio',1,true,true,false,null,'');return false;">Growth Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Moderate Portfolio',1,true,true,false,null,'');return false;">Moderate Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Conservative Portfolio',1,true,true,false,null,'');return false;">Conservative Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Income Portfolio',1,true,true,false,null,'');return false;">Income Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Bill Bernstein No Brainer',1,true,true,false,null,'');return false;">Bill Bernstein No Brainer</a></li><li><a href="#" onclick="populatePortfolio('Bill Schultheis Coffee House',1,true,true,false,null,'');return false;">Bill Schultheis Coffee House</a></li><li><a href="#" onclick="populatePortfolio('Bogleheads Three Funds',1,true,true,false,null,'');return false;">Bogleheads Three Funds</a></li><li><a href="#" onclick="populatePortfolio('Bogleheads Four Funds',1,true,true,false,null,'');return false;">Bogleheads Four Funds</a></li><li><a href="#" onclick="populatePortfolio('David Swensen Lazy Portfolio',1,true,true,false,null,'');return false;">David Swensen Lazy Portfolio</a></li><li><a href="#" onclick="populatePortfolio('David Swensen Yale Endowment',1,true,true,false,null,'');return false;">David Swensen Yale Endowment</a></li><li><a href="#" onclick="populatePortfolio('FundAdvice Ultimate Buy & Hold Portfolio',1,true,true,false,null,'');return false;">FundAdvice Ultimate Buy &amp; Hold Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Harry Browne Permanent Portfolio',1,true,true,false,null,'');return false;">Harry Browne Permanent Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Larry Swedroe Simple Portfolio',1,true,true,false,null,'');return false;">Larry Swedroe Simple Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Larry Swedroe Minimize FatTails Portfolio',1,true,true,false,null,'');return false;">Larry Swedroe Minimize FatTails Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Mebane Faber Ivy Portfolio',1,true,true,false,null,'');return false;">Mebane Faber Ivy Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Ray Dalio All Seasons',1,true,true,false,null,'');return false;">Ray Dalio All Seasons</a></li><li><a href="#" onclick="populatePortfolio('Rick Ferri Core Four',1,true,true,false,null,'');return false;">Rick Ferri Core Four</a></li><li><a href="#" onclick="populatePortfolio('Scott Burns Couch Portfolio',1,true,true,false,null,'');return false;">Scott Burns Couch Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Stocks\/Bonds (60\/40)',1,true,true,false,null,'');return false;">Stocks/Bonds (60/40)</a></li><li><a href="#" onclick="populatePortfolio('Stocks\/Bonds (40\/60)',1,true,true,false,null,'');return false;">Stocks/Bonds (40/60)</a></li></ul></div>
+</div>
+<div class="col-sm-2 separateTop text-nowrap"><b>Portfolio #2</b><div id="allocation-menu-2" class="btn-group left-margin btn-group-sm allocation-menu hidden-print" role="group"><button id="allocationOptionsButton2" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="glyphicon glyphicon-cog"></i> <span class="caret"></span></button><ul class="dropdown-menu scrollable-menu"><li class="dropdown-header">Allocation Weights</li><li><a href="#" onclick="equalWeightAllocations(2,'');return false;">Equal Weight</a></li><li><a href="#" onclick="normalizeAllocations(2,'');return false;">Normalize</a></li><li><a href="#" onclick="clearAllocations(2,'');return false;">Clear</a></li><li><a href="#" onclick="copyAllocations(1,2,'');return false;">Copy From #1</a></li><li><a href="#" onclick="copyAllocations(3,2,'');return false;">Copy From #3</a></li><li class="divider"></li><li class="dropdown-header">Lazy Portfolios</li><li><a href="#" onclick="populatePortfolio('Growth Portfolio',2,true,true,false,null,'');return false;">Growth Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Moderate Portfolio',2,true,true,false,null,'');return false;">Moderate Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Conservative Portfolio',2,true,true,false,null,'');return false;">Conservative Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Income Portfolio',2,true,true,false,null,'');return false;">Income Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Bill Bernstein No Brainer',2,true,true,false,null,'');return false;">Bill Bernstein No Brainer</a></li><li><a href="#" onclick="populatePortfolio('Bill Schultheis Coffee House',2,true,true,false,null,'');return false;">Bill Schultheis Coffee House</a></li><li><a href="#" onclick="populatePortfolio('Bogleheads Three Funds',2,true,true,false,null,'');return false;">Bogleheads Three Funds</a></li><li><a href="#" onclick="populatePortfolio('Bogleheads Four Funds',2,true,true,false,null,'');return false;">Bogleheads Four Funds</a></li><li><a href="#" onclick="populatePortfolio('David Swensen Lazy Portfolio',2,true,true,false,null,'');return false;">David Swensen Lazy Portfolio</a></li><li><a href="#" onclick="populatePortfolio('David Swensen Yale Endowment',2,true,true,false,null,'');return false;">David Swensen Yale Endowment</a></li><li><a href="#" onclick="populatePortfolio('FundAdvice Ultimate Buy & Hold Portfolio',2,true,true,false,null,'');return false;">FundAdvice Ultimate Buy &amp; Hold Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Harry Browne Permanent Portfolio',2,true,true,false,null,'');return false;">Harry Browne Permanent Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Larry Swedroe Simple Portfolio',2,true,true,false,null,'');return false;">Larry Swedroe Simple Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Larry Swedroe Minimize FatTails Portfolio',2,true,true,false,null,'');return false;">Larry Swedroe Minimize FatTails Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Mebane Faber Ivy Portfolio',2,true,true,false,null,'');return false;">Mebane Faber Ivy Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Ray Dalio All Seasons',2,true,true,false,null,'');return false;">Ray Dalio All Seasons</a></li><li><a href="#" onclick="populatePortfolio('Rick Ferri Core Four',2,true,true,false,null,'');return false;">Rick Ferri Core Four</a></li><li><a href="#" onclick="populatePortfolio('Scott Burns Couch Portfolio',2,true,true,false,null,'');return false;">Scott Burns Couch Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Stocks\/Bonds (60\/40)',2,true,true,false,null,'');return false;">Stocks/Bonds (60/40)</a></li><li><a href="#" onclick="populatePortfolio('Stocks\/Bonds (40\/60)',2,true,true,false,null,'');return false;">Stocks/Bonds (40/60)</a></li></ul></div>
+</div>
+<div class="col-sm-2 separateTop text-nowrap"><b>Portfolio #3</b><div id="allocation-menu-3" class="btn-group left-margin btn-group-sm allocation-menu hidden-print" role="group"><button id="allocationOptionsButton3" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="glyphicon glyphicon-cog"></i> <span class="caret"></span></button><ul class="dropdown-menu scrollable-menu dropdown-menu-right-desktop"><li class="dropdown-header">Allocation Weights</li><li><a href="#" onclick="equalWeightAllocations(3,'');return false;">Equal Weight</a></li><li><a href="#" onclick="normalizeAllocations(3,'');return false;">Normalize</a></li><li><a href="#" onclick="clearAllocations(3,'');return false;">Clear</a></li><li><a href="#" onclick="copyAllocations(1,3,'');return false;">Copy From #1</a></li><li><a href="#" onclick="copyAllocations(2,3,'');return false;">Copy From #2</a></li><li class="divider"></li><li class="dropdown-header">Lazy Portfolios</li><li><a href="#" onclick="populatePortfolio('Growth Portfolio',3,true,true,false,null,'');return false;">Growth Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Moderate Portfolio',3,true,true,false,null,'');return false;">Moderate Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Conservative Portfolio',3,true,true,false,null,'');return false;">Conservative Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Income Portfolio',3,true,true,false,null,'');return false;">Income Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Bill Bernstein No Brainer',3,true,true,false,null,'');return false;">Bill Bernstein No Brainer</a></li><li><a href="#" onclick="populatePortfolio('Bill Schultheis Coffee House',3,true,true,false,null,'');return false;">Bill Schultheis Coffee House</a></li><li><a href="#" onclick="populatePortfolio('Bogleheads Three Funds',3,true,true,false,null,'');return false;">Bogleheads Three Funds</a></li><li><a href="#" onclick="populatePortfolio('Bogleheads Four Funds',3,true,true,false,null,'');return false;">Bogleheads Four Funds</a></li><li><a href="#" onclick="populatePortfolio('David Swensen Lazy Portfolio',3,true,true,false,null,'');return false;">David Swensen Lazy Portfolio</a></li><li><a href="#" onclick="populatePortfolio('David Swensen Yale Endowment',3,true,true,false,null,'');return false;">David Swensen Yale Endowment</a></li><li><a href="#" onclick="populatePortfolio('FundAdvice Ultimate Buy & Hold Portfolio',3,true,true,false,null,'');return false;">FundAdvice Ultimate Buy &amp; Hold Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Harry Browne Permanent Portfolio',3,true,true,false,null,'');return false;">Harry Browne Permanent Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Larry Swedroe Simple Portfolio',3,true,true,false,null,'');return false;">Larry Swedroe Simple Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Larry Swedroe Minimize FatTails Portfolio',3,true,true,false,null,'');return false;">Larry Swedroe Minimize FatTails Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Mebane Faber Ivy Portfolio',3,true,true,false,null,'');return false;">Mebane Faber Ivy Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Ray Dalio All Seasons',3,true,true,false,null,'');return false;">Ray Dalio All Seasons</a></li><li><a href="#" onclick="populatePortfolio('Rick Ferri Core Four',3,true,true,false,null,'');return false;">Rick Ferri Core Four</a></li><li><a href="#" onclick="populatePortfolio('Scott Burns Couch Portfolio',3,true,true,false,null,'');return false;">Scott Burns Couch Portfolio</a></li><li><a href="#" onclick="populatePortfolio('Stocks\/Bonds (60\/40)',3,true,true,false,null,'');return false;">Stocks/Bonds (60/40)</a></li><li><a href="#" onclick="populatePortfolio('Stocks\/Bonds (40\/60)',3,true,true,false,null,'');return false;">Stocks/Bonds (40/60)</a></li></ul></div>
+</div>
+</div>
+<div class="row  asset-row">
+<div class="col-sm-2 separateTop">Asset 1</div>
+<div class="col-sm-4 asset-column">
+<span class="hidden_jaws"><label for="asset1">Select asset 1</label></span>
+<select id="asset1" name="asset1" class="form-control" >
+<option value="">Select asset class...</option>
+<optgroup label="US Equity">
+<option value="TotalStockMarket">US Stock Market</option>
+<option value="LargeCapBlend">US Large Cap</option>
+<option value="LargeCapValue">US Large Cap Value</option>
+<option value="LargeCapGrowth">US Large Cap Growth</option>
+<option value="MidCapBlend">US Mid Cap</option>
+<option value="MidCapValue">US Mid Cap Value</option>
+<option value="MidCapGrowth">US Mid Cap Growth</option>
+<option value="SmallCapBlend">US Small Cap</option>
+<option value="SmallCapValue">US Small Cap Value</option>
+<option value="SmallCapGrowth">US Small Cap Growth</option>
+<option value="MicroCap">US Micro Cap</option>
+</optgroup>
+<optgroup label="International Equity">
+<option value="IntlStockMarket">Global ex-US Stock Market</option>
+<option value="IntlDeveloped">Intl Developed ex-US Market</option>
+<option value="IntlSmall">International ex-US Small Cap</option>
+<option value="IntlValue">International ex-US Value</option>
+<option value="Europe">European Stocks</option>
+<option value="Pacific">Pacific Stocks</option>
+<option value="EmergingMarket">Emerging Markets</option>
+</optgroup>
+<optgroup label="Fixed Income">
+<option value="TreasuryBills">Cash</option>
+<option value="ShortTreasury">Short Term Treasury</option>
+<option value="IntermediateTreasury">Intermediate Term Treasury</option>
+<option value="TreasuryNotes">10-year Treasury</option>
+<option value="LongTreasury">Long Term Treasury</option>
+<option value="TotalBond">Total US Bond Market</option>
+<option value="TIPS">TIPS</option>
+<option value="GlobalBond">Global Bonds (Unhedged)</option>
+<option value="GlobalBondHedged">Global Bonds (USD Hedged)</option>
+<option value="ShortInvBond">Short-Term Investment Grade</option>
+<option value="CorpBond">Corporate Bonds</option>
+<option value="LongCorpBond">Long-Term Corporate Bonds</option>
+<option value="HighYield">High Yield Corporate Bonds</option>
+<option value="ShortTaxExempt">Short-Term Tax-Exempt</option>
+<option value="InterTaxExempt">Intermediate-Term Tax-Exempt</option>
+<option value="LongTaxExempt">Long-Term Tax-Exempt</option>
+</optgroup>
+<optgroup label="Alternatives">
+<option value="REIT">REIT</option>
+<option value="Gold">Gold</option>
+<option value="PreciousMetals">Precious Metals</option>
+<option value="Commodities">Commodities</option>
+</optgroup>
+</select>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation1_1">Enter percentage allocation for asset 1 in portfolio 1</label></span>
+<input type="number" id="allocation1_1" name="allocation1_1" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation1_2">Enter percentage allocation for asset 1 in portfolio 2</label></span>
+<input type="number" id="allocation1_2" name="allocation1_2" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation1_3">Enter percentage allocation for asset 1 in portfolio 3</label></span>
+<input type="number" id="allocation1_3" name="allocation1_3" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+<div class="row asset-row">
+<div class="col-sm-2 separateTop">Asset 2</div>
+<div class="col-sm-4 asset-column">
+<span class="hidden_jaws"><label for="asset2">Select asset 2</label></span>
+<select id="asset2" name="asset2" class="form-control" >
+<option value="">Select asset class...</option>
+<optgroup label="US Equity">
+<option value="TotalStockMarket">US Stock Market</option>
+<option value="LargeCapBlend">US Large Cap</option>
+<option value="LargeCapValue">US Large Cap Value</option>
+<option value="LargeCapGrowth">US Large Cap Growth</option>
+<option value="MidCapBlend">US Mid Cap</option>
+<option value="MidCapValue">US Mid Cap Value</option>
+<option value="MidCapGrowth">US Mid Cap Growth</option>
+<option value="SmallCapBlend">US Small Cap</option>
+<option value="SmallCapValue">US Small Cap Value</option>
+<option value="SmallCapGrowth">US Small Cap Growth</option>
+<option value="MicroCap">US Micro Cap</option>
+</optgroup>
+<optgroup label="International Equity">
+<option value="IntlStockMarket">Global ex-US Stock Market</option>
+<option value="IntlDeveloped">Intl Developed ex-US Market</option>
+<option value="IntlSmall">International ex-US Small Cap</option>
+<option value="IntlValue">International ex-US Value</option>
+<option value="Europe">European Stocks</option>
+<option value="Pacific">Pacific Stocks</option>
+<option value="EmergingMarket">Emerging Markets</option>
+</optgroup>
+<optgroup label="Fixed Income">
+<option value="TreasuryBills">Cash</option>
+<option value="ShortTreasury">Short Term Treasury</option>
+<option value="IntermediateTreasury">Intermediate Term Treasury</option>
+<option value="TreasuryNotes">10-year Treasury</option>
+<option value="LongTreasury">Long Term Treasury</option>
+<option value="TotalBond">Total US Bond Market</option>
+<option value="TIPS">TIPS</option>
+<option value="GlobalBond">Global Bonds (Unhedged)</option>
+<option value="GlobalBondHedged">Global Bonds (USD Hedged)</option>
+<option value="ShortInvBond">Short-Term Investment Grade</option>
+<option value="CorpBond">Corporate Bonds</option>
+<option value="LongCorpBond">Long-Term Corporate Bonds</option>
+<option value="HighYield">High Yield Corporate Bonds</option>
+<option value="ShortTaxExempt">Short-Term Tax-Exempt</option>
+<option value="InterTaxExempt">Intermediate-Term Tax-Exempt</option>
+<option value="LongTaxExempt">Long-Term Tax-Exempt</option>
+</optgroup>
+<optgroup label="Alternatives">
+<option value="REIT">REIT</option>
+<option value="Gold">Gold</option>
+<option value="PreciousMetals">Precious Metals</option>
+<option value="Commodities">Commodities</option>
+</optgroup>
+</select>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation2_1">Enter percentage allocation for asset 2 in portfolio 1</label></span>
+<input type="number" id="allocation2_1" name="allocation2_1" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation2_2">Enter percentage allocation for asset 2 in portfolio 2</label></span>
+<input type="number" id="allocation2_2" name="allocation2_2" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation2_3">Enter percentage allocation for asset 2 in portfolio 3</label></span>
+<input type="number" id="allocation2_3" name="allocation2_3" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+<div class="row  asset-row">
+<div class="col-sm-2 separateTop">Asset 3</div>
+<div class="col-sm-4 asset-column">
+<span class="hidden_jaws"><label for="asset3">Select asset 3</label></span>
+<select id="asset3" name="asset3" class="form-control" >
+<option value="">Select asset class...</option>
+<optgroup label="US Equity">
+<option value="TotalStockMarket">US Stock Market</option>
+<option value="LargeCapBlend">US Large Cap</option>
+<option value="LargeCapValue">US Large Cap Value</option>
+<option value="LargeCapGrowth">US Large Cap Growth</option>
+<option value="MidCapBlend">US Mid Cap</option>
+<option value="MidCapValue">US Mid Cap Value</option>
+<option value="MidCapGrowth">US Mid Cap Growth</option>
+<option value="SmallCapBlend">US Small Cap</option>
+<option value="SmallCapValue">US Small Cap Value</option>
+<option value="SmallCapGrowth">US Small Cap Growth</option>
+<option value="MicroCap">US Micro Cap</option>
+</optgroup>
+<optgroup label="International Equity">
+<option value="IntlStockMarket">Global ex-US Stock Market</option>
+<option value="IntlDeveloped">Intl Developed ex-US Market</option>
+<option value="IntlSmall">International ex-US Small Cap</option>
+<option value="IntlValue">International ex-US Value</option>
+<option value="Europe">European Stocks</option>
+<option value="Pacific">Pacific Stocks</option>
+<option value="EmergingMarket">Emerging Markets</option>
+</optgroup>
+<optgroup label="Fixed Income">
+<option value="TreasuryBills">Cash</option>
+<option value="ShortTreasury">Short Term Treasury</option>
+<option value="IntermediateTreasury">Intermediate Term Treasury</option>
+<option value="TreasuryNotes">10-year Treasury</option>
+<option value="LongTreasury">Long Term Treasury</option>
+<option value="TotalBond">Total US Bond Market</option>
+<option value="TIPS">TIPS</option>
+<option value="GlobalBond">Global Bonds (Unhedged)</option>
+<option value="GlobalBondHedged">Global Bonds (USD Hedged)</option>
+<option value="ShortInvBond">Short-Term Investment Grade</option>
+<option value="CorpBond">Corporate Bonds</option>
+<option value="LongCorpBond">Long-Term Corporate Bonds</option>
+<option value="HighYield">High Yield Corporate Bonds</option>
+<option value="ShortTaxExempt">Short-Term Tax-Exempt</option>
+<option value="InterTaxExempt">Intermediate-Term Tax-Exempt</option>
+<option value="LongTaxExempt">Long-Term Tax-Exempt</option>
+</optgroup>
+<optgroup label="Alternatives">
+<option value="REIT">REIT</option>
+<option value="Gold">Gold</option>
+<option value="PreciousMetals">Precious Metals</option>
+<option value="Commodities">Commodities</option>
+</optgroup>
+</select>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation3_1">Enter percentage allocation for asset 3 in portfolio 1</label></span>
+<input type="number" id="allocation3_1" name="allocation3_1" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation3_2">Enter percentage allocation for asset 3 in portfolio 2</label></span>
+<input type="number" id="allocation3_2" name="allocation3_2" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation3_3">Enter percentage allocation for asset 3 in portfolio 3</label></span>
+<input type="number" id="allocation3_3" name="allocation3_3" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+<div class="row asset-row">
+<div class="col-sm-2 separateTop">Asset 4</div>
+<div class="col-sm-4 asset-column">
+<span class="hidden_jaws"><label for="asset4">Select asset 4</label></span>
+<select id="asset4" name="asset4" class="form-control" >
+<option value="">Select asset class...</option>
+<optgroup label="US Equity">
+<option value="TotalStockMarket">US Stock Market</option>
+<option value="LargeCapBlend">US Large Cap</option>
+<option value="LargeCapValue">US Large Cap Value</option>
+<option value="LargeCapGrowth">US Large Cap Growth</option>
+<option value="MidCapBlend">US Mid Cap</option>
+<option value="MidCapValue">US Mid Cap Value</option>
+<option value="MidCapGrowth">US Mid Cap Growth</option>
+<option value="SmallCapBlend">US Small Cap</option>
+<option value="SmallCapValue">US Small Cap Value</option>
+<option value="SmallCapGrowth">US Small Cap Growth</option>
+<option value="MicroCap">US Micro Cap</option>
+</optgroup>
+<optgroup label="International Equity">
+<option value="IntlStockMarket">Global ex-US Stock Market</option>
+<option value="IntlDeveloped">Intl Developed ex-US Market</option>
+<option value="IntlSmall">International ex-US Small Cap</option>
+<option value="IntlValue">International ex-US Value</option>
+<option value="Europe">European Stocks</option>
+<option value="Pacific">Pacific Stocks</option>
+<option value="EmergingMarket">Emerging Markets</option>
+</optgroup>
+<optgroup label="Fixed Income">
+<option value="TreasuryBills">Cash</option>
+<option value="ShortTreasury">Short Term Treasury</option>
+<option value="IntermediateTreasury">Intermediate Term Treasury</option>
+<option value="TreasuryNotes">10-year Treasury</option>
+<option value="LongTreasury">Long Term Treasury</option>
+<option value="TotalBond">Total US Bond Market</option>
+<option value="TIPS">TIPS</option>
+<option value="GlobalBond">Global Bonds (Unhedged)</option>
+<option value="GlobalBondHedged">Global Bonds (USD Hedged)</option>
+<option value="ShortInvBond">Short-Term Investment Grade</option>
+<option value="CorpBond">Corporate Bonds</option>
+<option value="LongCorpBond">Long-Term Corporate Bonds</option>
+<option value="HighYield">High Yield Corporate Bonds</option>
+<option value="ShortTaxExempt">Short-Term Tax-Exempt</option>
+<option value="InterTaxExempt">Intermediate-Term Tax-Exempt</option>
+<option value="LongTaxExempt">Long-Term Tax-Exempt</option>
+</optgroup>
+<optgroup label="Alternatives">
+<option value="REIT">REIT</option>
+<option value="Gold">Gold</option>
+<option value="PreciousMetals">Precious Metals</option>
+<option value="Commodities">Commodities</option>
+</optgroup>
+</select>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation4_1">Enter percentage allocation for asset 4 in portfolio 1</label></span>
+<input type="number" id="allocation4_1" name="allocation4_1" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation4_2">Enter percentage allocation for asset 4 in portfolio 2</label></span>
+<input type="number" id="allocation4_2" name="allocation4_2" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation4_3">Enter percentage allocation for asset 4 in portfolio 3</label></span>
+<input type="number" id="allocation4_3" name="allocation4_3" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+<div class="row  asset-row">
+<div class="col-sm-2 separateTop">Asset 5</div>
+<div class="col-sm-4 asset-column">
+<span class="hidden_jaws"><label for="asset5">Select asset 5</label></span>
+<select id="asset5" name="asset5" class="form-control" >
+<option value="">Select asset class...</option>
+<optgroup label="US Equity">
+<option value="TotalStockMarket">US Stock Market</option>
+<option value="LargeCapBlend">US Large Cap</option>
+<option value="LargeCapValue">US Large Cap Value</option>
+<option value="LargeCapGrowth">US Large Cap Growth</option>
+<option value="MidCapBlend">US Mid Cap</option>
+<option value="MidCapValue">US Mid Cap Value</option>
+<option value="MidCapGrowth">US Mid Cap Growth</option>
+<option value="SmallCapBlend">US Small Cap</option>
+<option value="SmallCapValue">US Small Cap Value</option>
+<option value="SmallCapGrowth">US Small Cap Growth</option>
+<option value="MicroCap">US Micro Cap</option>
+</optgroup>
+<optgroup label="International Equity">
+<option value="IntlStockMarket">Global ex-US Stock Market</option>
+<option value="IntlDeveloped">Intl Developed ex-US Market</option>
+<option value="IntlSmall">International ex-US Small Cap</option>
+<option value="IntlValue">International ex-US Value</option>
+<option value="Europe">European Stocks</option>
+<option value="Pacific">Pacific Stocks</option>
+<option value="EmergingMarket">Emerging Markets</option>
+</optgroup>
+<optgroup label="Fixed Income">
+<option value="TreasuryBills">Cash</option>
+<option value="ShortTreasury">Short Term Treasury</option>
+<option value="IntermediateTreasury">Intermediate Term Treasury</option>
+<option value="TreasuryNotes">10-year Treasury</option>
+<option value="LongTreasury">Long Term Treasury</option>
+<option value="TotalBond">Total US Bond Market</option>
+<option value="TIPS">TIPS</option>
+<option value="GlobalBond">Global Bonds (Unhedged)</option>
+<option value="GlobalBondHedged">Global Bonds (USD Hedged)</option>
+<option value="ShortInvBond">Short-Term Investment Grade</option>
+<option value="CorpBond">Corporate Bonds</option>
+<option value="LongCorpBond">Long-Term Corporate Bonds</option>
+<option value="HighYield">High Yield Corporate Bonds</option>
+<option value="ShortTaxExempt">Short-Term Tax-Exempt</option>
+<option value="InterTaxExempt">Intermediate-Term Tax-Exempt</option>
+<option value="LongTaxExempt">Long-Term Tax-Exempt</option>
+</optgroup>
+<optgroup label="Alternatives">
+<option value="REIT">REIT</option>
+<option value="Gold">Gold</option>
+<option value="PreciousMetals">Precious Metals</option>
+<option value="Commodities">Commodities</option>
+</optgroup>
+</select>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation5_1">Enter percentage allocation for asset 5 in portfolio 1</label></span>
+<input type="number" id="allocation5_1" name="allocation5_1" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation5_2">Enter percentage allocation for asset 5 in portfolio 2</label></span>
+<input type="number" id="allocation5_2" name="allocation5_2" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation5_3">Enter percentage allocation for asset 5 in portfolio 3</label></span>
+<input type="number" id="allocation5_3" name="allocation5_3" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+<div class="row asset-row">
+<div class="col-sm-2 separateTop">Asset 6</div>
+<div class="col-sm-4 asset-column">
+<span class="hidden_jaws"><label for="asset6">Select asset 6</label></span>
+<select id="asset6" name="asset6" class="form-control" >
+<option value="">Select asset class...</option>
+<optgroup label="US Equity">
+<option value="TotalStockMarket">US Stock Market</option>
+<option value="LargeCapBlend">US Large Cap</option>
+<option value="LargeCapValue">US Large Cap Value</option>
+<option value="LargeCapGrowth">US Large Cap Growth</option>
+<option value="MidCapBlend">US Mid Cap</option>
+<option value="MidCapValue">US Mid Cap Value</option>
+<option value="MidCapGrowth">US Mid Cap Growth</option>
+<option value="SmallCapBlend">US Small Cap</option>
+<option value="SmallCapValue">US Small Cap Value</option>
+<option value="SmallCapGrowth">US Small Cap Growth</option>
+<option value="MicroCap">US Micro Cap</option>
+</optgroup>
+<optgroup label="International Equity">
+<option value="IntlStockMarket">Global ex-US Stock Market</option>
+<option value="IntlDeveloped">Intl Developed ex-US Market</option>
+<option value="IntlSmall">International ex-US Small Cap</option>
+<option value="IntlValue">International ex-US Value</option>
+<option value="Europe">European Stocks</option>
+<option value="Pacific">Pacific Stocks</option>
+<option value="EmergingMarket">Emerging Markets</option>
+</optgroup>
+<optgroup label="Fixed Income">
+<option value="TreasuryBills">Cash</option>
+<option value="ShortTreasury">Short Term Treasury</option>
+<option value="IntermediateTreasury">Intermediate Term Treasury</option>
+<option value="TreasuryNotes">10-year Treasury</option>
+<option value="LongTreasury">Long Term Treasury</option>
+<option value="TotalBond">Total US Bond Market</option>
+<option value="TIPS">TIPS</option>
+<option value="GlobalBond">Global Bonds (Unhedged)</option>
+<option value="GlobalBondHedged">Global Bonds (USD Hedged)</option>
+<option value="ShortInvBond">Short-Term Investment Grade</option>
+<option value="CorpBond">Corporate Bonds</option>
+<option value="LongCorpBond">Long-Term Corporate Bonds</option>
+<option value="HighYield">High Yield Corporate Bonds</option>
+<option value="ShortTaxExempt">Short-Term Tax-Exempt</option>
+<option value="InterTaxExempt">Intermediate-Term Tax-Exempt</option>
+<option value="LongTaxExempt">Long-Term Tax-Exempt</option>
+</optgroup>
+<optgroup label="Alternatives">
+<option value="REIT">REIT</option>
+<option value="Gold">Gold</option>
+<option value="PreciousMetals">Precious Metals</option>
+<option value="Commodities">Commodities</option>
+</optgroup>
+</select>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation6_1">Enter percentage allocation for asset 6 in portfolio 1</label></span>
+<input type="number" id="allocation6_1" name="allocation6_1" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation6_2">Enter percentage allocation for asset 6 in portfolio 2</label></span>
+<input type="number" id="allocation6_2" name="allocation6_2" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation6_3">Enter percentage allocation for asset 6 in portfolio 3</label></span>
+<input type="number" id="allocation6_3" name="allocation6_3" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+<div class="row  asset-row">
+<div class="col-sm-2 separateTop">Asset 7</div>
+<div class="col-sm-4 asset-column">
+<span class="hidden_jaws"><label for="asset7">Select asset 7</label></span>
+<select id="asset7" name="asset7" class="form-control" >
+<option value="">Select asset class...</option>
+<optgroup label="US Equity">
+<option value="TotalStockMarket">US Stock Market</option>
+<option value="LargeCapBlend">US Large Cap</option>
+<option value="LargeCapValue">US Large Cap Value</option>
+<option value="LargeCapGrowth">US Large Cap Growth</option>
+<option value="MidCapBlend">US Mid Cap</option>
+<option value="MidCapValue">US Mid Cap Value</option>
+<option value="MidCapGrowth">US Mid Cap Growth</option>
+<option value="SmallCapBlend">US Small Cap</option>
+<option value="SmallCapValue">US Small Cap Value</option>
+<option value="SmallCapGrowth">US Small Cap Growth</option>
+<option value="MicroCap">US Micro Cap</option>
+</optgroup>
+<optgroup label="International Equity">
+<option value="IntlStockMarket">Global ex-US Stock Market</option>
+<option value="IntlDeveloped">Intl Developed ex-US Market</option>
+<option value="IntlSmall">International ex-US Small Cap</option>
+<option value="IntlValue">International ex-US Value</option>
+<option value="Europe">European Stocks</option>
+<option value="Pacific">Pacific Stocks</option>
+<option value="EmergingMarket">Emerging Markets</option>
+</optgroup>
+<optgroup label="Fixed Income">
+<option value="TreasuryBills">Cash</option>
+<option value="ShortTreasury">Short Term Treasury</option>
+<option value="IntermediateTreasury">Intermediate Term Treasury</option>
+<option value="TreasuryNotes">10-year Treasury</option>
+<option value="LongTreasury">Long Term Treasury</option>
+<option value="TotalBond">Total US Bond Market</option>
+<option value="TIPS">TIPS</option>
+<option value="GlobalBond">Global Bonds (Unhedged)</option>
+<option value="GlobalBondHedged">Global Bonds (USD Hedged)</option>
+<option value="ShortInvBond">Short-Term Investment Grade</option>
+<option value="CorpBond">Corporate Bonds</option>
+<option value="LongCorpBond">Long-Term Corporate Bonds</option>
+<option value="HighYield">High Yield Corporate Bonds</option>
+<option value="ShortTaxExempt">Short-Term Tax-Exempt</option>
+<option value="InterTaxExempt">Intermediate-Term Tax-Exempt</option>
+<option value="LongTaxExempt">Long-Term Tax-Exempt</option>
+</optgroup>
+<optgroup label="Alternatives">
+<option value="REIT">REIT</option>
+<option value="Gold">Gold</option>
+<option value="PreciousMetals">Precious Metals</option>
+<option value="Commodities">Commodities</option>
+</optgroup>
+</select>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation7_1">Enter percentage allocation for asset 7 in portfolio 1</label></span>
+<input type="number" id="allocation7_1" name="allocation7_1" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation7_2">Enter percentage allocation for asset 7 in portfolio 2</label></span>
+<input type="number" id="allocation7_2" name="allocation7_2" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation7_3">Enter percentage allocation for asset 7 in portfolio 3</label></span>
+<input type="number" id="allocation7_3" name="allocation7_3" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+<div class="row asset-row">
+<div class="col-sm-2 separateTop">Asset 8</div>
+<div class="col-sm-4 asset-column">
+<span class="hidden_jaws"><label for="asset8">Select asset 8</label></span>
+<select id="asset8" name="asset8" class="form-control" >
+<option value="">Select asset class...</option>
+<optgroup label="US Equity">
+<option value="TotalStockMarket">US Stock Market</option>
+<option value="LargeCapBlend">US Large Cap</option>
+<option value="LargeCapValue">US Large Cap Value</option>
+<option value="LargeCapGrowth">US Large Cap Growth</option>
+<option value="MidCapBlend">US Mid Cap</option>
+<option value="MidCapValue">US Mid Cap Value</option>
+<option value="MidCapGrowth">US Mid Cap Growth</option>
+<option value="SmallCapBlend">US Small Cap</option>
+<option value="SmallCapValue">US Small Cap Value</option>
+<option value="SmallCapGrowth">US Small Cap Growth</option>
+<option value="MicroCap">US Micro Cap</option>
+</optgroup>
+<optgroup label="International Equity">
+<option value="IntlStockMarket">Global ex-US Stock Market</option>
+<option value="IntlDeveloped">Intl Developed ex-US Market</option>
+<option value="IntlSmall">International ex-US Small Cap</option>
+<option value="IntlValue">International ex-US Value</option>
+<option value="Europe">European Stocks</option>
+<option value="Pacific">Pacific Stocks</option>
+<option value="EmergingMarket">Emerging Markets</option>
+</optgroup>
+<optgroup label="Fixed Income">
+<option value="TreasuryBills">Cash</option>
+<option value="ShortTreasury">Short Term Treasury</option>
+<option value="IntermediateTreasury">Intermediate Term Treasury</option>
+<option value="TreasuryNotes">10-year Treasury</option>
+<option value="LongTreasury">Long Term Treasury</option>
+<option value="TotalBond">Total US Bond Market</option>
+<option value="TIPS">TIPS</option>
+<option value="GlobalBond">Global Bonds (Unhedged)</option>
+<option value="GlobalBondHedged">Global Bonds (USD Hedged)</option>
+<option value="ShortInvBond">Short-Term Investment Grade</option>
+<option value="CorpBond">Corporate Bonds</option>
+<option value="LongCorpBond">Long-Term Corporate Bonds</option>
+<option value="HighYield">High Yield Corporate Bonds</option>
+<option value="ShortTaxExempt">Short-Term Tax-Exempt</option>
+<option value="InterTaxExempt">Intermediate-Term Tax-Exempt</option>
+<option value="LongTaxExempt">Long-Term Tax-Exempt</option>
+</optgroup>
+<optgroup label="Alternatives">
+<option value="REIT">REIT</option>
+<option value="Gold">Gold</option>
+<option value="PreciousMetals">Precious Metals</option>
+<option value="Commodities">Commodities</option>
+</optgroup>
+</select>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation8_1">Enter percentage allocation for asset 8 in portfolio 1</label></span>
+<input type="number" id="allocation8_1" name="allocation8_1" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation8_2">Enter percentage allocation for asset 8 in portfolio 2</label></span>
+<input type="number" id="allocation8_2" name="allocation8_2" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation8_3">Enter percentage allocation for asset 8 in portfolio 3</label></span>
+<input type="number" id="allocation8_3" name="allocation8_3" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+<div class="row  asset-row">
+<div class="col-sm-2 separateTop">Asset 9</div>
+<div class="col-sm-4 asset-column">
+<span class="hidden_jaws"><label for="asset9">Select asset 9</label></span>
+<select id="asset9" name="asset9" class="form-control" >
+<option value="">Select asset class...</option>
+<optgroup label="US Equity">
+<option value="TotalStockMarket">US Stock Market</option>
+<option value="LargeCapBlend">US Large Cap</option>
+<option value="LargeCapValue">US Large Cap Value</option>
+<option value="LargeCapGrowth">US Large Cap Growth</option>
+<option value="MidCapBlend">US Mid Cap</option>
+<option value="MidCapValue">US Mid Cap Value</option>
+<option value="MidCapGrowth">US Mid Cap Growth</option>
+<option value="SmallCapBlend">US Small Cap</option>
+<option value="SmallCapValue">US Small Cap Value</option>
+<option value="SmallCapGrowth">US Small Cap Growth</option>
+<option value="MicroCap">US Micro Cap</option>
+</optgroup>
+<optgroup label="International Equity">
+<option value="IntlStockMarket">Global ex-US Stock Market</option>
+<option value="IntlDeveloped">Intl Developed ex-US Market</option>
+<option value="IntlSmall">International ex-US Small Cap</option>
+<option value="IntlValue">International ex-US Value</option>
+<option value="Europe">European Stocks</option>
+<option value="Pacific">Pacific Stocks</option>
+<option value="EmergingMarket">Emerging Markets</option>
+</optgroup>
+<optgroup label="Fixed Income">
+<option value="TreasuryBills">Cash</option>
+<option value="ShortTreasury">Short Term Treasury</option>
+<option value="IntermediateTreasury">Intermediate Term Treasury</option>
+<option value="TreasuryNotes">10-year Treasury</option>
+<option value="LongTreasury">Long Term Treasury</option>
+<option value="TotalBond">Total US Bond Market</option>
+<option value="TIPS">TIPS</option>
+<option value="GlobalBond">Global Bonds (Unhedged)</option>
+<option value="GlobalBondHedged">Global Bonds (USD Hedged)</option>
+<option value="ShortInvBond">Short-Term Investment Grade</option>
+<option value="CorpBond">Corporate Bonds</option>
+<option value="LongCorpBond">Long-Term Corporate Bonds</option>
+<option value="HighYield">High Yield Corporate Bonds</option>
+<option value="ShortTaxExempt">Short-Term Tax-Exempt</option>
+<option value="InterTaxExempt">Intermediate-Term Tax-Exempt</option>
+<option value="LongTaxExempt">Long-Term Tax-Exempt</option>
+</optgroup>
+<optgroup label="Alternatives">
+<option value="REIT">REIT</option>
+<option value="Gold">Gold</option>
+<option value="PreciousMetals">Precious Metals</option>
+<option value="Commodities">Commodities</option>
+</optgroup>
+</select>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation9_1">Enter percentage allocation for asset 9 in portfolio 1</label></span>
+<input type="number" id="allocation9_1" name="allocation9_1" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation9_2">Enter percentage allocation for asset 9 in portfolio 2</label></span>
+<input type="number" id="allocation9_2" name="allocation9_2" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation9_3">Enter percentage allocation for asset 9 in portfolio 3</label></span>
+<input type="number" id="allocation9_3" name="allocation9_3" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+<div class="row asset-row">
+<div class="col-sm-2 separateTop">Asset 10</div>
+<div class="col-sm-4 asset-column">
+<span class="hidden_jaws"><label for="asset10">Select asset 10</label></span>
+<select id="asset10" name="asset10" class="form-control" >
+<option value="">Select asset class...</option>
+<optgroup label="US Equity">
+<option value="TotalStockMarket">US Stock Market</option>
+<option value="LargeCapBlend">US Large Cap</option>
+<option value="LargeCapValue">US Large Cap Value</option>
+<option value="LargeCapGrowth">US Large Cap Growth</option>
+<option value="MidCapBlend">US Mid Cap</option>
+<option value="MidCapValue">US Mid Cap Value</option>
+<option value="MidCapGrowth">US Mid Cap Growth</option>
+<option value="SmallCapBlend">US Small Cap</option>
+<option value="SmallCapValue">US Small Cap Value</option>
+<option value="SmallCapGrowth">US Small Cap Growth</option>
+<option value="MicroCap">US Micro Cap</option>
+</optgroup>
+<optgroup label="International Equity">
+<option value="IntlStockMarket">Global ex-US Stock Market</option>
+<option value="IntlDeveloped">Intl Developed ex-US Market</option>
+<option value="IntlSmall">International ex-US Small Cap</option>
+<option value="IntlValue">International ex-US Value</option>
+<option value="Europe">European Stocks</option>
+<option value="Pacific">Pacific Stocks</option>
+<option value="EmergingMarket">Emerging Markets</option>
+</optgroup>
+<optgroup label="Fixed Income">
+<option value="TreasuryBills">Cash</option>
+<option value="ShortTreasury">Short Term Treasury</option>
+<option value="IntermediateTreasury">Intermediate Term Treasury</option>
+<option value="TreasuryNotes">10-year Treasury</option>
+<option value="LongTreasury">Long Term Treasury</option>
+<option value="TotalBond">Total US Bond Market</option>
+<option value="TIPS">TIPS</option>
+<option value="GlobalBond">Global Bonds (Unhedged)</option>
+<option value="GlobalBondHedged">Global Bonds (USD Hedged)</option>
+<option value="ShortInvBond">Short-Term Investment Grade</option>
+<option value="CorpBond">Corporate Bonds</option>
+<option value="LongCorpBond">Long-Term Corporate Bonds</option>
+<option value="HighYield">High Yield Corporate Bonds</option>
+<option value="ShortTaxExempt">Short-Term Tax-Exempt</option>
+<option value="InterTaxExempt">Intermediate-Term Tax-Exempt</option>
+<option value="LongTaxExempt">Long-Term Tax-Exempt</option>
+</optgroup>
+<optgroup label="Alternatives">
+<option value="REIT">REIT</option>
+<option value="Gold">Gold</option>
+<option value="PreciousMetals">Precious Metals</option>
+<option value="Commodities">Commodities</option>
+</optgroup>
+</select>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation10_1">Enter percentage allocation for asset 10 in portfolio 1</label></span>
+<input type="number" id="allocation10_1" name="allocation10_1" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation10_2">Enter percentage allocation for asset 10 in portfolio 2</label></span>
+<input type="number" id="allocation10_2" name="allocation10_2" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2"><div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="allocation10_3">Enter percentage allocation for asset 10 in portfolio 3</label></span>
+<input type="number" id="allocation10_3" name="allocation10_3" class="form-control fmt-pospct asset-weight" >
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+<div class="row  totals-row">
+<div class="col-sm-2 separateTop"><b>Total</b></div>
+<div class="col-sm-2 col-sm-offset-4 totals-column">
+<div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="total1">Total allocation for portfolio 1</label></span>
+<input type="number" id="total1" name="total1" class="form-control" readonly>
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2 totals-column">
+<div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="total2">Total allocation for portfolio 2</label></span>
+<input type="number" id="total2" name="total2" class="form-control" readonly>
+<span class="input-group-addon">%</span>
+</div>
+</div>
+<div class="col-sm-2 totals-column">
+<div class="input-group smallMargin">
+<span class="hidden_jaws"><label for="total3">Total allocation for portfolio 3</label></span>
+<input type="number" id="total3" name="total3" class="form-control" readonly>
+<span class="input-group-addon">%</span>
+</div>
+</div>
+</div>
+</div>
+
+
+        <div class="form-group form-buttons">
+<div class="col-sm-offset-2 col-sm-10">
+<input type="submit" id="submitButton" value="Analyze Portfolios" class="btn btn-primary">
+<input type="button" id="cancelButton" value="Cancel" class="btn btn-default" onclick="document.location.href='index.html'">
+</div>
+</div>
+
+
+    </form>
+
+    
+    
+
+</div>
+
+
+
+<div id="symbolPicker" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="symbolPickerTitle" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h2 class="modal-title" id="symbolPickerTitle">Find ETF, Mutual Fund or Stock Symbol</h2>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="assetType" class="control-label col-sm-2">Type</label>
+                        <div class="col-sm-4">
+                            <select name="assetType" id="assetType" class="form-control">
+                                <option value="2">ETF</option>
+                                <option value="5">Mutual Fund</option>
+                                <option value="4">Closed-End Fund</option>
+                                <option value="1">Stock</option>
+                                <option value="10">Asset Class</option>
+                                
+                                
+                                <option value="6">Cash</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="assetSearch" class="control-label col-sm-2">Name</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="assetSearch" name="assetSearch" class="form-control typeahead" placeholder="Enter partial name (3 or more characters)" autofocus>
+                            <p class="help-block">Example: &quot;vanguard bond&quot;</p>
+                        </div>
+                    </div>
+                    <div class="form-group norender">
+                        <label for="cashAsset" class="control-label col-sm-2">Cash Asset</label>
+                        <div class="col-sm-10">
+                            <select name="cashAsset" id="cashAsset" class="form-control">
+                                <option value="CASHX">Money Market</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group norender" >
+                        <label for="assetClassAsset" class="control-label col-sm-2">Asset Class</label>
+                        <div class="col-sm-10">
+                            <select name="assetClassAsset" id="assetClassAsset" class="form-control">
+                                <optgroup label="US Equity">
+
+                                <option value="VTSMX">US Stock Market (VTSMX)</option>
+                                
+                                <option value="VFINX">US Large Cap (VFINX)</option>
+                                
+                                <option value="VIVAX">US Large Cap Value (VIVAX)</option>
+                                
+                                <option value="VIGRX">US Large Cap Growth (VIGRX)</option>
+                                
+                                <option value="VIMSX">US Mid Cap (VIMSX)</option>
+                                
+                                <option value="VMVIX">US Mid Cap Value (VMVIX)</option>
+                                
+                                <option value="VMGIX">US Mid Cap Growth (VMGIX)</option>
+                                
+                                <option value="NAESX">US Small Cap (NAESX)</option>
+                                
+                                <option value="VISVX">US Small Cap Value (VISVX)</option>
+                                
+                                <option value="VISGX">US Small Cap Growth (VISGX)</option>
+                                
+                                <option value="BRSIX">US Micro Cap (BRSIX)</option>
+                                </optgroup>
+<optgroup label="International Equity">
+
+                                <option value="VGTSX">Global ex-US Stock Market (VGTSX)</option>
+                                
+                                <option value="VTMGX">Intl Developed ex-US Market (VTMGX)</option>
+                                
+                                <option value="VSS">International ex-US Small Cap (VSS)</option>
+                                
+                                <option value="EFV">International ex-US Value (EFV)</option>
+                                
+                                <option value="VEURX">European Stocks (VEURX)</option>
+                                
+                                <option value="VPACX">Pacific Stocks (VPACX)</option>
+                                
+                                <option value="VEIEX">Emerging Markets (VEIEX)</option>
+                                </optgroup>
+<optgroup label="Fixed Income">
+
+                                <option value="CASHX">Cash (CASHX)</option>
+                                
+                                <option value="VFISX">Short Term Treasury (VFISX)</option>
+                                
+                                <option value="VFITX">Intermediate Term Treasury (VFITX)</option>
+                                
+                                <option value="IEF">10-year Treasury (IEF)</option>
+                                
+                                <option value="VUSTX">Long Term Treasury (VUSTX)</option>
+                                
+                                <option value="VBMFX">Total US Bond Market (VBMFX)</option>
+                                
+                                <option value="VIPSX">TIPS (VIPSX)</option>
+                                
+                                <option value="PIGLX">Global Bonds (Unhedged) (PIGLX)</option>
+                                
+                                <option value="PGBIX">Global Bonds (USD Hedged) (PGBIX)</option>
+                                
+                                <option value="VFSTX">Short-Term Investment Grade (VFSTX)</option>
+                                
+                                <option value="LQD">Corporate Bonds (LQD)</option>
+                                
+                                <option value="VWESX">Long-Term Corporate Bonds (VWESX)</option>
+                                
+                                <option value="VWEHX">High Yield Corporate Bonds (VWEHX)</option>
+                                
+                                <option value="VWSTX">Short-Term Tax-Exempt (VWSTX)</option>
+                                
+                                <option value="VWITX">Intermediate-Term Tax-Exempt (VWITX)</option>
+                                
+                                <option value="VWLTX">Long-Term Tax-Exempt (VWLTX)</option>
+                                </optgroup>
+<optgroup label="Alternatives">
+
+                                <option value="VGSIX">REIT (VGSIX)</option>
+                                
+                                <option value="GLD">Gold (GLD)</option>
+                                
+                                <option value="GDX">Precious Metals (GDX)</option>
+                                
+                                <option value="GSG">Commodities (GSG)</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+                    
+                </form>
+            </div>
+            <div class="form-buttons modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="selectTicker">Select</button>
+            </div>
+        </div>
+    </div>
+</div>
+  
+
+
+
+<div id="confirmDialog" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="confirmDialogTitle" aria-hidden="true">
+    <form class="form-horizontal" id="confirmActionForm">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h2 class="modal-title" id="confirmDialogTitle">Confirm Action</h2>
+                </div>
+                <div class="modal-body">
+                    <span id="confirmText"></span>
+                </div>
+                <div class="form-buttons modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal" id="cancelConfirmButton">Cancel</button>
+                    <button type="button" class="btn" data-dismiss="modal" id="confirmButton">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+
+<script src="../cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="jquery/jquery-3.4.1.min.js">\x3C/script>')</script>           
+<script src="../cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<script>jQuery.fn.modal || document.write('<script src="bootstrap/js/bootstrap.min6bf2.js?v=341">\x3C/script>')</script>    
+
+
+<script src="js/merged-cd97b9efd972c726e07a723ff74b40a0.min.js"></script>
+
+
+
+<script>
+$(function() {
+    $.each(q, function(index, f) {
+        f.call(document);
+    });
+    postPageInit();
+});
+</script>
+
+
+<%- include('../footer'); -%>
+
+
+          <!-- highcharts -->
+          <!-- <script src="https://code.highcharts.com/highcharts.js"></script>
+          <script src="https://code.highcharts.com/modules/data.js"></script>
+          <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+          <script src="https://code.highcharts.com/highcharts.js"></script> -->
+          
+          <!-- aos -->
+          <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+        <script>
+            AOS.init();
+        </script>
+        <!-- scripts -->
+        <!-- <script src="./asstes/js/script.js"></script>        
+        <script src="./asstes/js/chart.js"></script> -->
+        <script src="js/merged-cd97b9efd972c726e07a723ff74b40a0.min.js"></script>
+        
+    </body>
+</html>

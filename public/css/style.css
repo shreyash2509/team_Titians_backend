@@ -1,0 +1,142 @@
+*{
+    margin: 0%;
+    padding: 0%;
+    box-sizing: border-box;
+}
+
+.custom-toggler.navbar-toggler {
+    border-color: white;
+}
+.custom-toggler .navbar-toggler-icon {
+    background-image: white;
+}
+.navbar{
+    background-color: transparent !important;
+    padding: 1rem 0 0 0;
+}
+.navbar-nav{
+    margin: auto;
+}
+.navbar-brand{
+    color: white;
+}
+.nav-link{
+    color: white !important;
+}
+.navbar-nav li{
+    margin: 0 0.3rem;
+}
+.join-nav{
+    justify-content: center;
+}
+.join-btn{
+    background-color: #0784b5;
+    border-radius: 40px;
+    width: 100px;
+}
+/* .navbar-content{
+    margin: 0 2rem;
+} */
+.main-container{
+    background-color: #192428;
+    /* height: 100vh; */
+    padding: 0 3rem;
+}
+
+.text-slider-items {
+  display: none;
+}
+
+.cta-section{
+    margin: 8rem 0;
+}
+.cta-container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.cta-text{
+    text-align: center;
+    margin-bottom: 3rem;
+}
+.cta-heading{
+    font-size: 56px;
+    margin: 0%;
+}
+.cta-subheading{
+    font-size: 20px;
+}
+.cta-image img{
+  width: 100%;
+}
+.about-img img{
+  width: 100%;
+}
+.about-container{
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+.about-desc{
+    width: 780px;
+}
+.about-head{
+    color: white;
+    text-align: center;
+    font-size: 56px;
+    padding: 1.5rem 0;
+}
+.about-content{
+    color: white;
+    text-align: left;
+    font-size: 18px;
+}
+.about-content p{
+    margin: 0%;
+}
+.about-btn{
+    text-align: center;
+}
+.about-btn button{
+    background-color: #0784b5;
+    color: white;
+    width: 140px; 
+    height: 40px;
+    font-size: 19px;
+    border-radius: 10px;
+    border: none;
+    margin: 2rem 0 0 0;
+}
+.ftco-section{
+    padding: 8rem 0;
+}
+.heading-section{
+    font-size: 48px;
+}
+.left-contact{
+    background: #0784b5;
+    color: white;
+    font-weight: 700;
+    border-radius: 20px;
+}
+.wt-txt{
+    color: white;
+    text-decoration: none;
+    cursor: pointer;
+}
+.form-group button{
+    background: #0784b5;
+}
+
+.row>* {
+  margin-bottom: var(--bs-gutter-x);
+}
+
+.fl{
+  display: flex;
+  flex-wrap: wrap;
+  
+  justify-content: space-between;
+
+}
