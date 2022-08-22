@@ -173,6 +173,18 @@
   .first-last-name{
     display: flex;
   }
+  .first-last-name input{
+    width: 160px;
+  }
+
+  @media screen and (max-width: 678px){
+    .first-last-name{
+      width: 90% !important;
+    }
+    .first-last-name input{
+      /* width: initial !important; */
+    }
+  }
   
   .tnc-txt{
     font-size: 12px;
