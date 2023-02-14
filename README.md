@@ -1,1 +1,1 @@
-# gaming-backend
+# Stock management
